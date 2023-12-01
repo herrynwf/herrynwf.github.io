@@ -40,10 +40,13 @@ body {
 @media (max-width: 768px){
   h1 {
     font-size: 90px;
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
 
   h2{
    font-size: 60px; 
+   margin-bottom: 10px;
   }
 
   p {
