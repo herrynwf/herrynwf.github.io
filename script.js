@@ -3,11 +3,19 @@ var words = [
     "拒絕接觸", "講開始", "講yeah", "扁嘴", "拍枱", "指自己手機", "講（任何數字）", "答問題", "講飲", "un腳", "掂電話", "掂人地",
     "拍手", "講（冇）食野", "飲野", "講醉", "講(英文)", "歡呼", "講喂"
   ];
+
+  var preInd=-1;
   
   function selectRandomWord() {
-    var randomIndex = Math.floor(Math.random() * words.length);
+    var randomIndex;
+    do{
+      randomIndex= Math.floor(Math.random() * words.length);
+    } while(randomIndex===preInd);
+    preInd=randomIndex
     var selectedWord = words[randomIndex];
     document.getElementById("selectedWord").textContent = selectedWord;
   }
 
- 
+ function toggle(){
+  document.body.classList.toggle("darkM");
+ }
