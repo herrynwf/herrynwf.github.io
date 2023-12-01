@@ -10,5 +10,4 @@ var words = [
     document.getElementById("selectedWord").textContent = selectedWord;
   }
 
-  var screenW=window.innerWidth;
-  document.getElementById("screenW").textContent=screenW;
+ 
