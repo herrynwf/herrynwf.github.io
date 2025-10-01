@@ -380,7 +380,7 @@
             // Update each stock data
             for (let item of watchlist) {
                 try {
-                    const response = await fetch('/analyze', {
+                    const response = await fetch('https://stock-analyzer-backend-5q7o.onrender.com/analyze', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -424,7 +424,7 @@
             currentAnalysisResult = null;
             
             try {
-                const response = await fetch('/analyze', {
+                const response = await fetch('https://stock-analyzer-backend-5q7o.onrender.com/analyze', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
