@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Volume Analysis Tool</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style> /*test*/
+        body { 
+            font-family: Arial; 
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input { 
+            padding: 10px; 
+            font-size: 16px; 
+            width: 200px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        button { 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            background: #007cba;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover { background: #005a87; }
+        button:disabled { 
+            background: #ccc; 
+            cursor: not-allowed; 
+        }
+        
+        /* Watchlist Styles */
+        .watchlist-section {
+            margin: 30px 0;
+            padding: 20px 0;
+            border-top: 2px solid #eee;
+        }
+        .watchlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .watchlist-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .last-updated {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .watchlist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .watchlist-table th,
+        .watchlist-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .watchlist-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        .watchlist-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .signal-buy { 
+            color: #28a745; 
+            font-weight: bold; 
+        }
+        .signal-hold { 
+            color: #ffc107; 
+            font-weight: bold; 
+        }
+        .signal-na { 
+            color: #6c757d; 
+        }
+        .signal-loading { 
+            color: #17a2b8; 
+        }
+        .signal-error { 
+            color: #dc3545; 
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .add-to-watchlist-btn {
+            background: #28a745;
+            margin-top: 15px;
+        }
+        .add-to-watchlist-btn:hover {
+            background: #218838;
+        }
+        
+        .empty-watchlist {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        #result { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #f8f9fa;
+            border-radius: 4px;
+            min-height: 50px;
+        }
+        .loading { color: #666; }
+        .error { color: #d32f2f; }
+        .success { color: #2e7d32; }
+        .simulation-badge {
+            background: #ff9800;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+            /* Mobile Responsive */
+        @media screen and (max-width: 768px) {
+            body {
+                margin: 20px auto;
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            input {
+                width: 60%;
+                font-size: 14px;
+                padding: 8px;
+            }
+            
+            button {
+                padding: 8px 15px;
+                font-size: 14px;
+                margin-left: 5px;
+            }
+            
+            /* Watchlist Table Mobile */
+            .watchlist-table {
+                font-size: 12px;
+            }
+            
+            .watchlist-table th,
+            .watchlist-table td {
+                padding: 8px 4px;
+            }
+            
+            .watchlist-table th:nth-child(2),
+            .watchlist-table td:nth-child(2) {
+                display: none; /* Hide Threshold Volume on mobile */
+            }
+            
+            .delete-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            .watchlist-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .last-updated {
+                font-size: 12px;
+                margin-top: 5px;
+            }
+            
+            #result {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Stock Volume Analysis Tool</h1>
+        <p>Enter US stock symbol to analyze volume signal</p>
+        
+        <div>
+            <input type="text" id="stockInput" placeholder="Enter stock symbol (e.g., AAPL)" maxlength="10">
+            <button onclick="analyzeStock()">Analyze</button>
+        </div>
+        
+        <!-- Watchlist Section -->
+        <div class="watchlist-section">
+            <div class="watchlist-header">
+                <div class="watchlist-title">📊 Watchlist</div>
+                <div class="last-updated" id="lastUpdated"></div>
+            </div>
+            
+            <div id="watchlistContainer">
+                <div class="empty-watchlist" id="emptyWatchlist">
+                    No stocks in watchlist. Analyze a stock and click "Add to Watchlist" to get started.
+                </div>
+                
+                <table class="watchlist-table" id="watchlistTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Threshold Volume</th>
+                            <th>Today Volume</th>
+                            <th>Signal</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody id="watchlistBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="result">
+            <p>Waiting for stock symbol input...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentAnalysisResult = null;
+        let watchlist = [];
+        
+        // Load watchlist from localStorage on page load
+        window.addEventListener('load', function() {
+            loadWatchlist();
+            updateWatchlistDisplay();
+            if (watchlist.length > 0) {
+                refreshWatchlistData();
+            }
+        });
+        
+        function loadWatchlist() {
+            const saved = localStorage.getItem('stockWatchlist');
+            if (saved) {
+                try {
+                    watchlist = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading watchlist:', e);
+                    watchlist = [];
+                }
+            }
+        }
+        
+        function saveWatchlist() {
+            localStorage.setItem('stockWatchlist', JSON.stringify(watchlist));
+        }
+        
+        function addToWatchlist() {
+            if (!currentAnalysisResult) return;
+            
+            const symbol = currentAnalysisResult.symbol;
+            
+            // Check if already in watchlist
+            if (watchlist.some(item => item.symbol === symbol)) {
+                alert(`${symbol} is already in watchlist!`);
+                return;
+            }
+            
+            // Add to watchlist
+            const watchlistItem = {
+                symbol: symbol,
+                addedTime: new Date().toISOString(),
+                thresholdVolume: currentAnalysisResult.threshold,
+                fiveDayAverage: currentAnalysisResult.five_day_average || 0,  // 新增這行
+                todayVolume: currentAnalysisResult.current_volume || 0,
+                todayVolumeDisplay: currentAnalysisResult.current_volume_display || 'Not available',  // 新增這行
+                signal: currentAnalysisResult.signal,
+                status: 'loaded'
+            };
+            
+            watchlist.push(watchlistItem);
+            saveWatchlist();
+            updateWatchlistDisplay();
+            
+            // Hide the add button
+            const addBtn = document.getElementById('addToWatchlistBtn');
+            if (addBtn) {
+                addBtn.style.display = 'none';
+            }
+        }
+        
+        function removeFromWatchlist(symbol) {
+            watchlist = watchlist.filter(item => item.symbol !== symbol);
+            saveWatchlist();
+            updateWatchlistDisplay();
+            
+            // Show add button if current analysis matches removed symbol
+            if (currentAnalysisResult && currentAnalysisResult.symbol === symbol) {
+                const addBtn = document.getElementById('addToWatchlistBtn');
+                if (addBtn) {
+                    addBtn.style.display = 'inline-block';
+                }
+            }
+        }
+        
+        function updateWatchlistDisplay() {
+            const emptyDiv = document.getElementById('emptyWatchlist');
+            const table = document.getElementById('watchlistTable');
+            const tbody = document.getElementById('watchlistBody');
+            
+            if (watchlist.length === 0) {
+                emptyDiv.style.display = 'block';
+                table.style.display = 'none';
+                document.getElementById('lastUpdated').textContent = '';
+                return;
+            }
+            
+            emptyDiv.style.display = 'none';
+            table.style.display = 'table';
+            
+            // Update table content
+            tbody.innerHTML = watchlist.map(item => `
+                <tr>
+                    <td><strong>${item.symbol}</strong></td>
+                    <td>${item.status === 'loading' ? 'Loading...' : (item.fiveDayAverage ? item.fiveDayAverage.toLocaleString() : 'N/A')}</td>
+                    <td>${item.status === 'loading' ? 'Loading...' : (item.todayVolumeDisplay === 'Not available' ? 'Not available' : (item.todayVolume ? item.todayVolume.toLocaleString() : '0'))}</td>
+                    <td class="signal-${item.signal ? item.signal.toLowerCase() : 'loading'}">
+                        ${item.status === 'loading' ? 'Updating...' : 
+                          item.status === 'error' ? 'Error' :
+                          item.signal || 'N/A'}
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="removeFromWatchlist('${item.symbol}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Update last updated time
+            document.getElementById('lastUpdated').textContent = 
+                `Last Updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
+        async function refreshWatchlistData() {
+            if (watchlist.length === 0) return;
+            
+            // Set all items to loading state
+            watchlist.forEach(item => {
+                item.status = 'loading';
+            });
+            updateWatchlistDisplay();
+            
+            // Update each stock data
+            for (let item of watchlist) {
+                try {
+                    const response = await fetch('/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ symbol: item.symbol })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        item.thresholdVolume = data.threshold || 0;
+                        item.fiveDayAverage = data.five_day_average || 0;  // 新增這行
+                        item.todayVolume = data.current_volume || 0;
+                        item.todayVolumeDisplay = data.current_volume_display || 'Not available';
+                        item.signal = data.signal;
+                        item.status = 'loaded';
+                    } else {
+                        item.status = 'error';
+                    }
+                } catch (error) {
+                    console.error(`Error updating ${item.symbol}:`, error);
+                    item.status = 'error';
+                }
+                
+                updateWatchlistDisplay();
+            }
+            
+            saveWatchlist();
+        }
+        
+        async function analyzeStock() {
+            const symbol = document.getElementById('stockInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!symbol) {
+                resultDiv.innerHTML = '<p class="error">Please enter a stock symbol</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p class="loading">Analyzing...</p>';
+            currentAnalysisResult = null;
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ symbol: symbol })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'error') {
+                    resultDiv.innerHTML = `<p class="error">❌ ${data.message}</p>`;
+                    return;
+                }
+                
+                currentAnalysisResult = data;
+                
+                // Check if already in watchlist
+                const inWatchlist = watchlist.some(item => item.symbol === data.symbol);
+                const addToWatchlistButton = inWatchlist ? '' : 
+                    '<button id="addToWatchlistBtn" class="add-to-watchlist-btn" onclick="addToWatchlist()">Add to Watchlist</button>';
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <div style="text-align: right; color: #666; margin-bottom: 10px; font-size: 14px;">
+                            Viewing Time: ${data.market_status.current_time}
+                            ${data.simulation_mode ? '<span class="simulation-badge">SIMULATION MODE</span>' : ''}
+                        </div>
+                        
+                        <h3>📊 ${data.symbol} Analysis Result</h3>
+                        <div style="background: ${data.signal === 'BUY' ? '#d4edda' : data.signal === 'N/A' ? '#f8f9fa' : '#fff3cd'}; 
+                                    padding: 15px; margin: 10px 0; border-radius: 5px;">
+                            <h2 style="color: ${data.signal === 'BUY' ? '#155724' : data.signal === 'N/A' ? '#6c757d' : '#856404'}; margin: 0;">
+                                ${data.signal === 'BUY' ? '🔥 BUY Signal' : data.signal === 'N/A' ? '📊 Market Status' : '⏸️ HOLD Signal'}
+                            </h2>
+                        </div>
+                        
+                        <p><strong>Today's 9:30am-10:00am Volume:</strong> ${data.current_volume_display}</p>
+                        <p><strong>Historical 5-Day 9:30am-10:00am Average Volume:</strong> ${(data.five_day_average || 0).toLocaleString()}</p>
+                        ${data.threshold > 0 ? `<p><strong>1.5x Threshold:</strong> ${data.threshold.toLocaleString()}</p>` : ''}
+                        ${data.ratio > 0 ? `<p><strong>Ratio:</strong> ${data.ratio}x</p>` : ''}
+                        <p><strong>Explanation:</strong> ${data.explanation || 'No explanation'}</p>
+                        
+                        <p><strong>Historical 5-Day 9:30am-10:00am Volume:</strong><br>
+                        ${(data.historical_details || []).map(item => 
+                            `${item.date_formatted}: ${item.volume.toLocaleString()}`
+                        ).join('<br>')}</p>
+                        
+                        <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 14px; color: #666;">
+                            Market Status: ${data.market_status.message}
+                        </div>
+                        
+                        ${addToWatchlistButton}
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="error">❌ Connection error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Trigger analysis on Enter key press
+        document.getElementById('stockInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeStock();
+            }
+        });
+    </script>
+</body>
+</html>
