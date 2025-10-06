@@ -185,9 +185,8 @@
                 padding: 8px 4px;
             }
             
-            .watchlist-table th:nth-child(2),
-            .watchlist-table td:nth-child(2) {
-                display: none; /* Hide Threshold Volume on mobile */
+            .desktop-only {
+                display: none; /* Hide Threshold Volume, OR High, Breakout on mobile */
             }
             
             .delete-btn {
@@ -237,8 +236,11 @@
                     <thead>
                         <tr>
                             <th>Ticker</th>
-                            <th>Threshold Volume</th>
+                            <th class="desktop-only">Volume Slot</th>
                             <th>Today Volume</th>
+                            <th class="desktop-only">OR High</th>
+                            <th class="desktop-only">Breakout</th>
+                            <th class="desktop-only">Rule 3</th>
                             <th>Signal</th>
                             <th>Delete</th>
                         </tr>
@@ -255,6 +257,10 @@
     </div>
 
     <script>
+        const API_URL = window.location.hostname === 'herrynwf.github.io' 
+            ? 'https://stock-analyzer-backend-5q7o.onrender.com'
+            : 'http://localhost:5000';
+
         let currentAnalysisResult = null;
         let watchlist = [];
         
@@ -298,10 +304,19 @@
             const watchlistItem = {
                 symbol: symbol,
                 addedTime: new Date().toISOString(),
-                thresholdVolume: currentAnalysisResult.threshold,
-                fiveDayAverage: currentAnalysisResult.five_day_average || 0,  // 新增這行
-                todayVolume: currentAnalysisResult.current_volume || 0,
-                todayVolumeDisplay: currentAnalysisResult.current_volume_display || 'Not available',  // 新增這行
+                volumeTimeSlot: currentAnalysisResult.volume_time_slot || 'N/A',
+                volumeToday: currentAnalysisResult.volume_today || 0,
+                volumeAverage: currentAnalysisResult.volume_average || 0,
+                volumeThreshold: currentAnalysisResult.volume_threshold || 0,
+                volumeRatio: currentAnalysisResult.volume_ratio || 0,
+                volumeStatus: currentAnalysisResult.volume_status || 'N/A',
+                orHigh: currentAnalysisResult.or_high || null,
+                orHighStatus: currentAnalysisResult.or_high_status || 'N/A',
+                breakout: currentAnalysisResult.breakout || 'N/A',
+                breakoutStatus: currentAnalysisResult.breakout_status || 'N/A',
+                breakoutPrice: currentAnalysisResult.breakout_price || null,
+                confirmation: currentAnalysisResult.confirmation || 'N/A',
+                confirmationStatus: currentAnalysisResult.confirmation_status || 'N/A',
                 signal: currentAnalysisResult.signal,
                 status: 'loaded'
             };
@@ -349,13 +364,16 @@
             // Update table content
             tbody.innerHTML = watchlist.map(item => `
                 <tr>
-                    <td><strong>${item.symbol}</strong></td>
-                    <td>${item.status === 'loading' ? 'Loading...' : (item.fiveDayAverage ? item.fiveDayAverage.toLocaleString() : 'N/A')}</td>
-                    <td>${item.status === 'loading' ? 'Loading...' : (item.todayVolumeDisplay === 'Not available' ? 'Not available' : (item.todayVolume ? item.todayVolume.toLocaleString() : '0'))}</td>
+                    <td><strong><a href="#" onclick="analyzeStockFromWatchlist('${item.symbol}'); return false;" style="color: #007cba; text-decoration: none;">${item.symbol}</a></strong></td>
+                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.volumeTimeSlot || 'N/A')}</td>
+                    <td>${item.status === 'loading' ? 'Loading...' : (item.volumeToday ? item.volumeToday.toLocaleString() : 'N/A')}</td>                    
+                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.orHigh ? '$' + item.orHigh.toFixed(2) : 'N/A')}</td>
+                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.breakout === 'Pass' && item.breakoutPrice ? item.breakout + ' ($' + item.breakoutPrice.toFixed(2) + ')' : (item.breakout || 'N/A'))}</td>
+                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.confirmation || 'N/A')}</td>
                     <td class="signal-${item.signal ? item.signal.toLowerCase() : 'loading'}">
                         ${item.status === 'loading' ? 'Updating...' : 
-                          item.status === 'error' ? 'Error' :
-                          item.signal || 'N/A'}
+                        item.status === 'error' ? 'Error' :
+                        item.signal || 'N/A'}
                     </td>
                     <td>
                         <button class="delete-btn" onclick="removeFromWatchlist('${item.symbol}')">Delete</button>
@@ -380,7 +398,7 @@
             // Update each stock data
             for (let item of watchlist) {
                 try {
-                    const response = await fetch('https://stock-analyzer-backend-5q7o.onrender.com/analyze', {
+                    const response = await fetch(`${API_URL}/analyze`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -391,10 +409,19 @@
                     const data = await response.json();
                     
                     if (data.status === 'success') {
-                        item.thresholdVolume = data.threshold || 0;
-                        item.fiveDayAverage = data.five_day_average || 0;  // 新增這行
-                        item.todayVolume = data.current_volume || 0;
-                        item.todayVolumeDisplay = data.current_volume_display || 'Not available';
+                        item.volumeTimeSlot = data.volume_time_slot || 'N/A';
+                        item.volumeToday = data.volume_today || 0;
+                        item.volumeAverage = data.volume_average || 0;
+                        item.volumeThreshold = data.volume_threshold || 0;
+                        item.volumeRatio = data.volume_ratio || 0;
+                        item.volumeStatus = data.volume_status || 'N/A';
+                        item.orHigh = data.or_high || null;
+                        item.orHighStatus = data.or_high_status || 'N/A';
+                        item.breakout = data.breakout || 'N/A';
+                        item.breakoutStatus = data.breakout_status || 'N/A';
+                        item.breakoutPrice = data.breakout_price || null;
+                        item.confirmation = data.confirmation || 'N/A';
+                        item.confirmationStatus = data.confirmation_status || 'N/A';
                         item.signal = data.signal;
                         item.status = 'loaded';
                     } else {
@@ -424,7 +451,7 @@
             currentAnalysisResult = null;
             
             try {
-                const response = await fetch('https://stock-analyzer-backend-5q7o.onrender.com/analyze', {
+                const response = await fetch(`${API_URL}/analyze`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -460,17 +487,15 @@
                                 ${data.signal === 'BUY' ? '🔥 BUY Signal' : data.signal === 'N/A' ? '📊 Market Status' : '⏸️ HOLD Signal'}
                             </h2>
                         </div>
-                        
-                        <p><strong>Today's 9:30am-10:00am Volume:</strong> ${data.current_volume_display}</p>
-                        <p><strong>Historical 5-Day 9:30am-10:00am Average Volume:</strong> ${(data.five_day_average || 0).toLocaleString()}</p>
-                        ${data.threshold > 0 ? `<p><strong>1.5x Threshold:</strong> ${data.threshold.toLocaleString()}</p>` : ''}
-                        ${data.ratio > 0 ? `<p><strong>Ratio:</strong> ${data.ratio}x</p>` : ''}
+                        ${data.volume_time_slot ? `<p><strong>Volume Breakout Slot:</strong> ${data.volume_time_slot}</p>` : ''}
+                        ${data.volume_today ? `<p><strong>Slot Volume:</strong> ${data.volume_today.toLocaleString()}</p>` : ''}
+                        ${data.volume_average ? `<p><strong>5-Day Slot Average:</strong> ${data.volume_average.toLocaleString()}</p>` : ''}
+                        ${data.volume_threshold ? `<p><strong>1.5x Threshold:</strong> ${data.volume_threshold.toLocaleString()}</p>` : ''}
+                        ${data.volume_ratio ? `<p><strong>Ratio:</strong> ${data.volume_ratio}x</p>` : ''}
+                        ${data.or_high ? `<p><strong>OR High (9:30-9:50):</strong> $${data.or_high.toFixed(2)}</p>` : ''}
+                        ${data.breakout && data.breakout !== 'N/A' ? `<p><strong>Breakout Status:</strong> ${data.breakout} ${data.breakout_message ? '(' + data.breakout_message + ')' : ''}</p>` : ''}
+                        ${data.confirmation && data.confirmation !== 'N/A' ? `<p><strong>Confirmation Status:</strong> ${data.confirmation} ${data.confirmation_message ? '(' + data.confirmation_message + ')' : ''}</p>` : ''}
                         <p><strong>Explanation:</strong> ${data.explanation || 'No explanation'}</p>
-                        
-                        <p><strong>Historical 5-Day 9:30am-10:00am Volume:</strong><br>
-                        ${(data.historical_details || []).map(item => 
-                            `${item.date_formatted}: ${item.volume.toLocaleString()}`
-                        ).join('<br>')}</p>
                         
                         <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 14px; color: #666;">
                             Market Status: ${data.market_status.message}
@@ -483,6 +508,13 @@
             } catch (error) {
                 resultDiv.innerHTML = '<p class="error">❌ Connection error: ' + error.message + '</p>';
             }
+        }
+
+        async function analyzeStockFromWatchlist(symbol) {
+            document.getElementById('stockInput').value = symbol;
+            await analyzeStock();
+            // Scroll to result
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
         }
         
         // Trigger analysis on Enter key press
