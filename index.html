@@ -242,6 +242,7 @@
                             <th class="desktop-only">Breakout</th>
                             <th class="desktop-only">Rule 3</th>
                             <th>Signal</th>
+                            <th>Sell Info</th>
                             <th>Delete</th>
                         </tr>
                     </thead>
@@ -318,6 +319,10 @@
                 confirmation: currentAnalysisResult.confirmation || 'N/A',
                 confirmationStatus: currentAnalysisResult.confirmation_status || 'N/A',
                 signal: currentAnalysisResult.signal,
+                sellSignal: currentAnalysisResult.sell_signal || false,
+                sellPrice: currentAnalysisResult.sell_price || null,
+                sellTime: currentAnalysisResult.sell_time || null,
+                sellMessage: currentAnalysisResult.sell_message || 'N/A',
                 status: 'loaded'
             };
             
@@ -375,6 +380,11 @@
                         item.status === 'error' ? 'Error' :
                         item.signal || 'N/A'}
                     </td>
+                    <td style="color: ${item.sellSignal ? '#dc3545' : '#6c757d'}; font-weight: ${item.sellSignal ? 'bold' : 'normal'};">
+                        ${item.status === 'loading' ? 'Loading...' : 
+                        item.sellSignal ? `SELL at $${item.sellPrice ? item.sellPrice.toFixed(2) : 'N/A'} (${item.sellTime || 'N/A'})` : 
+                        'N/A'}
+                    </td>
                     <td>
                         <button class="delete-btn" onclick="removeFromWatchlist('${item.symbol}')">Delete</button>
                     </td>
@@ -423,6 +433,10 @@
                         item.confirmation = data.confirmation || 'N/A';
                         item.confirmationStatus = data.confirmation_status || 'N/A';
                         item.signal = data.signal;
+                        item.sellSignal = data.sell_signal || false;
+                        item.sellPrice = data.sell_price || null;
+                        item.sellTime = data.sell_time || null;
+                        item.sellMessage = data.sell_message || 'N/A';
                         item.status = 'loaded';
                     } else {
                         item.status = 'error';
