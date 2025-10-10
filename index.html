@@ -210,52 +210,52 @@
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>🔥 Stock Volume Analysis Tool</h1>
-        <p>Enter US stock symbol to analyze volume signal</p>
-        
-        <div>
-            <input type="text" id="stockInput" placeholder="Enter stock symbol (e.g., AAPL)" maxlength="10">
-            <button onclick="analyzeStock()">Analyze</button>
-        </div>
-        
-        <!-- Watchlist Section -->
-        <div class="watchlist-section">
-            <div class="watchlist-header">
-                <div class="watchlist-title">📊 Watchlist</div>
-                <div class="last-updated" id="lastUpdated"></div>
+    <body>
+        <div class="container">
+            <h1>🔥 Stock Volume Analysis Tool</h1>
+            <p>Enter US stock symbol to analyze volume signal</p>
+            
+            <div>
+                <input type="text" id="stockInput" placeholder="Enter stock symbol (e.g., AAPL)" maxlength="10">
+                <button onclick="analyzeStock()">Analyze</button>
             </div>
             
-            <div id="watchlistContainer">
-                <div class="empty-watchlist" id="emptyWatchlist">
-                    No stocks in watchlist. Analyze a stock and click "Add to Watchlist" to get started.
+            <!-- Watchlist Section -->
+            <div class="watchlist-section">
+                <div class="watchlist-header">
+                    <div class="watchlist-title">📊 Watchlist</div>
+                    <div class="last-updated" id="lastUpdated"></div>
                 </div>
                 
-                <table class="watchlist-table" id="watchlistTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Ticker</th>
-                            <th class="desktop-only">Volume Slot</th>
-                            <th>Today Volume</th>
-                            <th class="desktop-only">OR High</th>
-                            <th class="desktop-only">Breakout</th>
-                            <th class="desktop-only">Rule 3</th>
-                            <th>Signal</th>
-                            <th>Sell Info</th>
-                            <th>Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody id="watchlistBody">
-                    </tbody>
-                </table>
+                <div id="watchlistContainer">
+                    <div class="empty-watchlist" id="emptyWatchlist">
+                        No stocks in watchlist. Analyze a stock and click "Add to Watchlist" to get started.
+                    </div>
+                    
+                    <table class="watchlist-table" id="watchlistTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th class="desktop-only">Volume Slot</th>
+                                <th>Today Volume</th>
+                                <th class="desktop-only">OR High</th>
+                                <th class="desktop-only">Breakout</th>
+                                <th class="desktop-only">Rule 3</th>
+                                <th>Signal</th>
+                                <th>Sell Info</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlistBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="result">
+                <p>Waiting for stock symbol input...</p>
             </div>
         </div>
-        
-        <div id="result">
-            <p>Waiting for stock symbol input...</p>
-        </div>
-    </div>
 
     <script>
         const API_URL = window.location.hostname === 'herrynwf.github.io' 
@@ -372,8 +372,8 @@
                     <td><strong><a href="#" onclick="analyzeStockFromWatchlist('${item.symbol}'); return false;" style="color: #007cba; text-decoration: none;">${item.symbol}</a></strong></td>
                     <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.volumeTimeSlot || 'N/A')}</td>
                     <td>${item.status === 'loading' ? 'Loading...' : (item.volumeToday ? item.volumeToday.toLocaleString() : 'N/A')}</td>                    
-                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.orHigh ? '$' + item.orHigh.toFixed(2) : 'N/A')}</td>
-                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.breakout === 'Pass' && item.breakoutPrice ? item.breakout + ' ($' + item.breakoutPrice.toFixed(2) + ')' : (item.breakout || 'N/A'))}</td>
+                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.orHigh ? '$' + item.orHigh.toFixed(4) : 'N/A')}</td>
+                    <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.breakout === 'Pass' && item.breakoutPrice ? item.breakout + ' ($' + item.breakoutPrice.toFixed(4) + ')' : (item.breakout || 'N/A'))}</td>
                     <td class="desktop-only">${item.status === 'loading' ? 'Loading...' : (item.confirmation || 'N/A')}</td>
                     <td class="signal-${item.signal ? item.signal.toLowerCase() : 'loading'}">
                         ${item.status === 'loading' ? 'Updating...' : 
@@ -382,7 +382,7 @@
                     </td>
                     <td style="color: ${item.sellSignal ? '#dc3545' : '#6c757d'}; font-weight: ${item.sellSignal ? 'bold' : 'normal'};">
                         ${item.status === 'loading' ? 'Loading...' : 
-                        item.sellSignal ? `SELL at $${item.sellPrice ? item.sellPrice.toFixed(2) : 'N/A'} (${item.sellTime || 'N/A'})` : 
+                        item.sellSignal ? `SELL at $${item.sellPrice ? item.sellPrice.toFixed(4) : 'N/A'} (${item.sellTime || 'N/A'})` : 
                         'N/A'}
                     </td>
                     <td>
@@ -506,9 +506,42 @@
                         ${data.volume_average ? `<p><strong>5-Day Slot Average:</strong> ${data.volume_average.toLocaleString()}</p>` : ''}
                         ${data.volume_threshold ? `<p><strong>1.5x Threshold:</strong> ${data.volume_threshold.toLocaleString()}</p>` : ''}
                         ${data.volume_ratio ? `<p><strong>Ratio:</strong> ${data.volume_ratio}x</p>` : ''}
-                        ${data.or_high ? `<p><strong>OR High (9:30-9:50):</strong> $${data.or_high.toFixed(2)}</p>` : ''}
+                        ${data.or_high ? `<p><strong>OR High (9:30-9:50):</strong> $${data.or_high.toFixed(4)}</p>` : ''}
                         ${data.breakout && data.breakout !== 'N/A' ? `<p><strong>Breakout Status:</strong> ${data.breakout} ${data.breakout_message ? '(' + data.breakout_message + ')' : ''}</p>` : ''}
                         ${data.confirmation && data.confirmation !== 'N/A' ? `<p><strong>Confirmation Status:</strong> ${data.confirmation} ${data.confirmation_message ? '(' + data.confirmation_message + ')' : ''}</p>` : ''}
+                        ${data.sell_signal !== undefined ? `
+                            <div style="margin-top: 20px; padding: 15px; background: ${data.sell_signal ? '#f8d7da' : '#d1ecf1'}; border-radius: 5px; border-left: 4px solid ${data.sell_signal ? '#dc3545' : '#17a2b8'};">
+                                <h4 style="margin-top: 0; color: ${data.sell_signal ? '#721c24' : '#0c5460'};">
+                                    ${data.sell_signal ? '🔴 SELL Signal Triggered' : '✅ No Sell Signal'}
+                                </h4>
+                                <p><strong>Sell Check Status:</strong> ${data.sell_message || 'N/A'}</p>
+                                ${data.sell_signal ? `
+                                    <p><strong>Sell Price:</strong> $${data.sell_price ? data.sell_price.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Sell Time:</strong> ${data.sell_time || 'N/A'}</p>
+                                    <p><strong>Bar1 Low:</strong> $${data.sell_bar1_low ? data.sell_bar1_low.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Bar2 Low:</strong> $${data.sell_bar2_low ? data.sell_bar2_low.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Min Low (Threshold):</strong> $${data.sell_min_low ? data.sell_min_low.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Latest Close:</strong> $${data.sell_price ? data.sell_price.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Bar1 Expected Time:</strong> ${data.sell_bar1_time || 'N/A'}</p>
+                                    <p><strong>Bar1 Data Fetch Time:</strong> ${data.sell_bar1_fetch_time || 'N/A'}</p>
+                                    <p><strong>Bar2 Expected Time:</strong> ${data.sell_bar2_time || 'N/A'}</p>
+                                    <p><strong>Bar2 Data Fetch Time:</strong> ${data.sell_bar2_fetch_time || 'N/A'}</p>
+                                    <p style="color: #721c24; font-weight: bold;">Condition: ${data.sell_price ? data.sell_price.toFixed(4) : 'N/A'} < ${data.sell_min_low ? data.sell_min_low.toFixed(4) : 'N/A'}</p>
+                                ` : `
+                                    <p><strong>Latest 1-min Close:</strong> $${data.sell_latest_close ? data.sell_latest_close.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Recent Bar1 (Most Recent Complete) Low:</strong> $${data.sell_bar1_low ? data.sell_bar1_low.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Recent Bar2 (Second Recent Complete) Low:</strong> $${data.sell_bar2_low ? data.sell_bar2_low.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Min Low (Threshold):</strong> $${data.sell_min_low ? data.sell_min_low.toFixed(4) : 'N/A'}</p>
+                                    <p><strong>Bar1 Expected Time:</strong> ${data.sell_bar1_time || 'N/A'}</p>
+                                    <p><strong>Bar1 Data Fetch Time:</strong> ${data.sell_bar1_fetch_time || 'N/A'}</p>
+                                    <p><strong>Bar2 Expected Time:</strong> ${data.sell_bar2_time || 'N/A'}</p>
+                                    <p><strong>Bar2 Data Fetch Time:</strong> ${data.sell_bar2_fetch_time || 'N/A'}</p>
+                                    <p><strong>1m Fetch Info:</strong> ${data.fetch_info_1m ? JSON.stringify(data.fetch_info_1m) : 'N/A'}</p>
+                                    <p><strong>5m Fetch Info:</strong> ${data.fetch_info_5m ? JSON.stringify(data.fetch_info_5m) : 'N/A'}</p>
+                                    <p style="color: #0c5460;">Condition: ${data.sell_latest_close ? data.sell_latest_close.toFixed(4) : 'N/A'} >= ${data.sell_min_low ? data.sell_min_low.toFixed(4) : 'N/A'} (No Sell)</p>
+                                `}
+                            </div>
+                        ` : ''}
                         <p><strong>Explanation:</strong> ${data.explanation || 'No explanation'}</p>
                         
                         <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 14px; color: #666;">
